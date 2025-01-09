@@ -1,0 +1,6 @@
+report.pdf
+*.log
+.venv/
+**/crops_report.xlsx
+*.env
+!config.env
