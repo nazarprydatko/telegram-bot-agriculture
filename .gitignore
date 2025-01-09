@@ -4,3 +4,4 @@ report.pdf
 **/crops_report.xlsx
 *.env
 !config.env
+__pycache__/
