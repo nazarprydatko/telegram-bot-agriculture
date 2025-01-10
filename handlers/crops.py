@@ -19,7 +19,13 @@ async def process_crop_data(message: Message, state: FSMContext):
         name, area, sowing_date, maturation_days = map(str.strip, data)
 
         area = float(area)
+        if area <= 0:
+            raise ValueError("Площа не може бути від'ємною або рівною нулю.")
+
         maturation_days = int(maturation_days)
+        if maturation_days <= 0:
+            raise ValueError("Прогноз дозрівання має бути додатним числом.")
+
         from datetime import datetime
         datetime.strptime(sowing_date, "%Y-%m-%d")
 
@@ -36,7 +42,8 @@ async def process_crop_data(message: Message, state: FSMContext):
     except Exception as e:
         await message.reply(f"❌ Сталася помилка: {e}")
     finally:
-        await state.clear()
+        if state:
+            await state.clear()
 
 async def callback_view_crops(callback: CallbackQuery):
     try:

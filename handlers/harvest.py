@@ -1,16 +1,28 @@
 from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
 from database import execute_query
 
-async def cmd_record_harvest(message: Message):
-    await message.reply("Введіть: ID посіву, Дата збору (YYYY-MM-DD), Кількість працівників, Маса врожаю (тонн).")
-
-async def process_harvest_data(message: Message):
+async def process_harvest_data(message: Message, state: FSMContext):
     try:
         crop_id, harvest_date, workers_count, total_mass = map(str.strip, message.text.split(","))
+        crop_id = int(crop_id)
+        workers_count = int(workers_count)
+        total_mass = float(total_mass)
+
+        if workers_count <= 0:
+            raise ValueError("Кількість працівників повинна бути більше 0.")
+        if total_mass <= 0:
+            raise ValueError("Маса врожаю повинна бути більше 0.")
+
         execute_query(
-            "INSERT INTO harvest (crop_id, harvest_date, workers_count, total_mass) VALUES (%s, %s, %s, %s)",
-            (int(crop_id), harvest_date, int(workers_count), float(total_mass))
+            "INSERT INTO harvest (crop_id, harvest_date, workers_count, total_mass) VALUES (%s, %s, %s, %s);",
+            (crop_id, harvest_date, workers_count, total_mass)
         )
-        await message.reply(f"✅ Дані про врожай для посіву ID {crop_id} успішно додано!")
+        await message.reply(f"✅ Врожай успішно додано для посіву {crop_id}!")
+    except ValueError as ve:
+        await message.reply(f"❌ Помилка у форматі введення: {ve}")
     except Exception as e:
-        await message.reply(f"❌ Помилка: {e}")
+        await message.reply(f"❌ Сталася помилка: {e}")
+    finally:
+        if state:
+            await state.clear()
