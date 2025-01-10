@@ -5,3 +5,4 @@ report.pdf
 *.env
 !config.env
 __pycache__/
+.env

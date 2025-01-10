@@ -1,4 +1,11 @@
-API_TOKEN = "8099685630:AAH-9p3Qlr_nNqSjFMfgCF2CxfheglQuig0"
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+API_TOKEN = os.getenv("API_TOKEN")
+
+if not API_TOKEN:
+    raise ValueError("API_TOKEN is not set in the environment variables!")
 
 DB_CONFIG = {
     "dbname": "farm_db",
