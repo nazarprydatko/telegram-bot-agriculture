@@ -6,3 +6,8 @@ report.pdf
 !config.env
 __pycache__/
 .env
+.idea
+fonts
+.coverage
+tall pytest-cov
+
