@@ -24,3 +24,11 @@ def execute_query(query, params=None):
     except Exception as e:
         db_connection.rollback()
         print(f"❌ Помилка виконання запиту: {e}")
+
+def fetch_one(query, params=None):
+    try:
+        db_cursor.execute(query, params or ())
+        return db_cursor.fetchone()
+    except Exception as e:
+        print(f"❌ Помилка бази даних: {e}")
+        return None
