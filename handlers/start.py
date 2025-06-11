@@ -16,10 +16,6 @@ from handlers.conditions import confirm_condition, cancel_condition
 
 from handlers.crops import callback_view_crops, process_crop_data
 from handlers.delete import confirm_delete, cancel_delete, process_delete_data
-from handlers.weather import process_city_weather
-from handlers.conditions import process_condition_data
-from handlers.harvest import process_harvest_data
-from handlers.expenses import process_expense_data
 from handlers.reports import cmd_generate_report, cmd_export_to_excel
 from handlers.profit import cmd_calculate_profit
 from handlers.edit_crop import callback_edit_crop, process_edit_crop_id, process_edit_crop_data
