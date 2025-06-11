@@ -1,15 +1,20 @@
+"""Обробка даних про стан посіву (вологість, температура, опади)."""
+
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
+
+from handlers.start import cmd_start
 from database import execute_query
+
 
 async def cmd_add_condition(message: Message, state: FSMContext):
     await message.reply("Введіть: ID посіву, Вологість ґрунту (%), Температура (°C), Опади (мм).")
     await state.set_state("waiting_for_condition")
 
+
 async def process_condition_data(message: Message, state: FSMContext):
     if message.text.strip() == "🏠 Головне меню":
         await state.clear()
-        from start import cmd_start
         await cmd_start(message, state)
         return
 
@@ -59,8 +64,9 @@ async def process_condition_data(message: Message, state: FSMContext):
 
     except ValueError as ve:
         await message.reply(f"❌ Помилка у форматі введення: {ve}")
-    except Exception as e:
+    except Exception as e:  # TODO: уточнити тип винятку
         await message.reply(f"❌ Помилка: {e}")
+
 
 async def confirm_condition(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -70,10 +76,11 @@ async def confirm_condition(callback: CallbackQuery, state: FSMContext):
             (data['crop_id'], data['soil_moisture'], data['temperature'], data['precipitation'])
         )
         await callback.message.edit_text("✅ Дані стану успішно додано!")
-    except Exception as e:
+    except Exception as e:  # TODO: уточнити тип винятку
         await callback.message.edit_text(f"❌ Сталася помилка при збереженні: {e}")
     finally:
         await state.clear()
+
 
 async def cancel_condition(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("❌ Додавання стану скасовано.")
