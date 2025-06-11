@@ -1,8 +1,6 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
 
 from handlers.start import (
     cmd_start,

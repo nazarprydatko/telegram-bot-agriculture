@@ -14,8 +14,8 @@ from handlers.harvest import confirm_harvest, cancel_harvest
 from handlers.expenses import confirm_expense, cancel_expense
 from handlers.conditions import confirm_condition, cancel_condition
 
-from handlers.crops import callback_view_crops, process_crop_data
-from handlers.delete import confirm_delete, cancel_delete, process_delete_data
+from handlers.crops import callback_view_crops
+from handlers.delete import confirm_delete, cancel_delete
 from handlers.reports import cmd_generate_report, cmd_export_to_excel
 from handlers.profit import cmd_calculate_profit
 from handlers.edit_crop import callback_edit_crop, process_edit_crop_id, process_edit_crop_data
