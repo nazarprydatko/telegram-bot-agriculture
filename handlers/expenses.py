@@ -3,10 +3,26 @@ from aiogram.fsm.context import FSMContext
 from database import execute_query
 
 class ExpenseStates:
+    """
+    FSM states for managing expense input and confirmation.
+    """
     waiting_for_expenses = "waiting_for_expenses"
     waiting_for_expense_confirmation = "waiting_for_expense_confirmation"
 
+
 async def process_expense_data(message: Message, state: FSMContext):
+    """
+    Process user input for expenses and prepare confirmation message.
+
+    Expected input format: crop_id, category, amount
+
+    Args:
+        message (Message): User message containing expense data.
+        state (FSMContext): FSM context to store parsed data.
+
+    Returns:
+        None
+    """
     try:
         crop_id, category, amount_str = map(str.strip, message.text.split(","))
         crop_id = int(crop_id)
@@ -44,6 +60,16 @@ async def process_expense_data(message: Message, state: FSMContext):
 
 
 async def confirm_expense(callback: CallbackQuery, state: FSMContext):
+    """
+    Save confirmed expense data to the database.
+
+    Args:
+        callback (CallbackQuery): Callback from inline button.
+        state (FSMContext): FSM context containing previously entered expense data.
+
+    Returns:
+        None
+    """
     data = await state.get_data()
     try:
         execute_query(
@@ -60,5 +86,15 @@ async def confirm_expense(callback: CallbackQuery, state: FSMContext):
 
 
 async def cancel_expense(callback: CallbackQuery, state: FSMContext):
+    """
+    Cancel the expense addition process and clear FSM state.
+
+    Args:
+        callback (CallbackQuery): Callback from inline button.
+        state (FSMContext): FSM context to clear.
+
+    Returns:
+        None
+    """
     await callback.message.edit_text("❌ Додавання витрат скасовано.")
     await state.clear()

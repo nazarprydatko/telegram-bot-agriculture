@@ -5,10 +5,24 @@ from database import fetch_all, execute_query
 from datetime import datetime
 
 class CropStates(StatesGroup):
+    """
+    States for managing crop-related user input.
+    """
     waiting_for_crop_data = State()
     waiting_for_crop_confirmation = State()
 
+
 async def cmd_add_crop(message: Message, state: FSMContext):
+    """
+    Ask the user to input crop data and set the FSM state.
+
+    Args:
+        message (Message): The Telegram message that triggered the command.
+        state (FSMContext): The FSM context to manage state transitions.
+
+    Returns:
+        None
+    """
     await message.reply(
         "Введіть дані для посіву: Назва культури, Площа (га), Дата посіву (YYYY-MM-DD), Прогноз дозрівання (днів)."
     )
@@ -16,6 +30,16 @@ async def cmd_add_crop(message: Message, state: FSMContext):
 
 
 async def process_crop_data(message: Message, state: FSMContext):
+    """
+    Process and validate crop data entered by the user, then ask for confirmation.
+
+    Args:
+        message (Message): User message containing crop data.
+        state (FSMContext): FSM context to store the data and update state.
+
+    Returns:
+        None
+    """
     if message.text.strip() == "🏠 Головне меню":
         await state.clear()
         from handlers.start import cmd_start
@@ -85,6 +109,16 @@ async def process_crop_data(message: Message, state: FSMContext):
 
 
 async def confirm_crop(callback: CallbackQuery, state: FSMContext):
+    """
+    Save the confirmed crop data to the database.
+
+    Args:
+        callback (CallbackQuery): Callback from inline button.
+        state (FSMContext): FSM context with previously stored crop data.
+
+    Returns:
+        None
+    """
     data = await state.get_data()
     try:
         query = """
@@ -107,11 +141,30 @@ async def confirm_crop(callback: CallbackQuery, state: FSMContext):
 
 
 async def cancel_crop(callback: CallbackQuery, state: FSMContext):
+    """
+    Cancel crop creation and clear the state.
+
+    Args:
+        callback (CallbackQuery): Callback from inline button.
+        state (FSMContext): FSM context to clear data.
+
+    Returns:
+        None
+    """
     await callback.message.edit_text("❌ Додавання посіву скасовано.")
     await state.clear()
 
 
 async def callback_view_crops(callback: CallbackQuery):
+    """
+    Display a list of all crops from the database.
+
+    Args:
+        callback (CallbackQuery): Callback from user requesting crop list.
+
+    Returns:
+        None
+    """
     try:
         query = "SELECT id, name, area, sowing_date FROM crops;"
         crops = fetch_all(query)
