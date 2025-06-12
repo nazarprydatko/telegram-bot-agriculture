@@ -1,5 +1,3 @@
-"""Модуль для обробки стану посівів: вологість, температура, опади."""
-
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from database import execute_query
@@ -63,8 +61,12 @@ async def process_condition_data(message: Message, state: FSMContext):
 
     except ValueError as ve:
         await message.reply(f"❌ Помилка у форматі введення: {ve}")
-    except Exception as e:  # noqa: W0718
-        await message.reply(f"❌ Помилка: {e}")
+    except TypeError as te:
+        await message.reply(f"❌ Неправильний тип даних: {te}")
+    except KeyError as ke:
+        await message.reply(f"❌ Відсутній ключ у даних: {ke}")
+    except Exception as e:
+        await message.reply(f"❌ Неочікувана помилка: {e}")
 
 
 async def confirm_condition(callback: CallbackQuery, state: FSMContext):
@@ -76,7 +78,9 @@ async def confirm_condition(callback: CallbackQuery, state: FSMContext):
             (data['crop_id'], data['soil_moisture'], data['temperature'], data['precipitation'])
         )
         await callback.message.edit_text("✅ Дані стану успішно додано!")
-    except Exception as e:  # noqa: W0718
+    except KeyError as ke:
+        await callback.message.edit_text(f"❌ Некоректні дані: {ke}")
+    except Exception as e:
         await callback.message.edit_text(f"❌ Сталася помилка при збереженні: {e}")
     finally:
         await state.clear()
