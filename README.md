@@ -71,3 +71,21 @@ source .venv/bin/activate # Linux/Mac
 
 5.Запустіть бота 
     python bot.py
+
+## Документування коду
+
+Для підтримки єдиного стилю в проєкті використовується форматування Google-style docstrings.
+
+### Приклад:
+```python
+def calculate_profit(revenue: float, expenses: float) -> float:
+    """
+    Обчислює прибуток за доходом та витратами.
+
+    Args:
+        revenue (float): Сума доходу.
+        expenses (float): Сума витрат.
+
+    Returns:
+        float: Чистий прибуток.
+    """
