@@ -1,7 +1,8 @@
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from database import execute_query
-from handlers.start import cmd_start
+from handlers.cmd_start_only import cmd_start
+
 
 
 async def cmd_add_condition(message: Message, state: FSMContext):

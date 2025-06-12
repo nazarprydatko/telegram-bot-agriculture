@@ -9,12 +9,12 @@ from aiogram.types import (
 from aiogram import Dispatcher, F
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from handlers.crops import confirm_crop, cancel_crop
+
+from handlers.crops import confirm_crop, cancel_crop, callback_view_crops
 from handlers.harvest import confirm_harvest, cancel_harvest
 from handlers.expenses import confirm_expense, cancel_expense
 from handlers.conditions import confirm_condition, cancel_condition
-
-from handlers.crops import callback_view_crops
+from handlers.cmd_start_only import cmd_start
 from handlers.delete import confirm_delete, cancel_delete
 from handlers.reports import cmd_generate_report, cmd_export_to_excel
 from handlers.profit import cmd_calculate_profit
@@ -27,6 +27,7 @@ main_menu_keyboard = ReplyKeyboardMarkup(
     one_time_keyboard=False
 )
 
+# Стан машини
 class CropStates(StatesGroup):
     waiting_for_crop_data = State()
     edit_crop_id = State()
@@ -47,48 +48,12 @@ class HarvestStates(StatesGroup):
 class ExpenseStates(StatesGroup):
     waiting_for_expenses = State()
 
-async def cmd_start(message: Message, state: FSMContext):
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="➕ Додати посів", callback_data="add_crop"),
-                InlineKeyboardButton(text="📄 Подивитися посіви", callback_data="view_crops"),
-            ],
-            [
-                InlineKeyboardButton(text="🗑 Видалити дані", callback_data="delete_data"),
-                InlineKeyboardButton(text="🌦 Дізнатися погоду", callback_data="get_weather"),
-            ],
-            [
-                InlineKeyboardButton(text="📊 Розрахувати рентабельність", callback_data="calculate_profit"),
-                InlineKeyboardButton(text="📜 Звіт у PDF", callback_data="generate_report"),
-            ],
-            [
-                InlineKeyboardButton(text="📂 Звіт у Excel", callback_data="export_to_excel"),
-                InlineKeyboardButton(text="🌱 Додати стан посіву", callback_data="add_condition"),
-            ],
-            [
-                InlineKeyboardButton(text="🌾 Записати врожай", callback_data="record_harvest"),
-                InlineKeyboardButton(text="💰 Додати витрати", callback_data="add_expenses"),
-            ],
-            [
-                InlineKeyboardButton(text="✏️ Редагувати посів", callback_data="edit_crop"),
-            ]
-        ]
-    )
-    await state.clear()
-    await message.answer(
-        "🌾 **Вітаємо у Telegram-боті для агрофірми!**\n\n"
-        "Оберіть дію за допомогою кнопок нижче:",
-        reply_markup=keyboard
-    )
-
-
+# Перехід назад у головне меню
 async def back_to_main_menu(message: Message, state: FSMContext):
-    await state.clear()  # Очищаємо стан FSM
+    await state.clear()
     await cmd_start(message, state)
 
-
-# Callback  з кнопкою повернення
+# Callback-хендлери
 async def callback_add_crop(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(
         "➕ Введіть дані для додавання посіву: Назва культури, Площа, Дата (YYYY-MM-DD), Прогноз дозрівання (днів).",
@@ -143,7 +108,7 @@ async def callback_export_to_excel(callback: CallbackQuery):
     print(f"Callback received: {callback.data}")
     await cmd_export_to_excel(callback.message)
 
-# Реєстрація callback
+# Реєстрація всіх callback'ів
 def register_callbacks(dp: Dispatcher):
     dp.message.register(back_to_main_menu, F.text == "🏠 Головне меню")
 
