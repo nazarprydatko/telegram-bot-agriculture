@@ -15,7 +15,6 @@ async def process_expense_data(message: Message, state: FSMContext):
         if amount <= 0:
             raise ValueError("Сума витрат повинна бути більше 0.")
 
-        # Зберігаємо у стан
         await state.update_data(
             crop_id=crop_id,
             category=category,
@@ -38,8 +37,11 @@ async def process_expense_data(message: Message, state: FSMContext):
 
     except ValueError as ve:
         await message.reply(f"❌ Помилка у форматі введення: {ve}")
+    except (TypeError, KeyError) as e:
+        await message.reply(f"❌ Невірні або відсутні дані: {e}")
     except Exception as e:
-        await message.reply(f"❌ Сталася помилка: {e}")
+        await message.reply(f"❌ Неочікувана помилка: {e}")
+
 
 async def confirm_expense(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -49,10 +51,13 @@ async def confirm_expense(callback: CallbackQuery, state: FSMContext):
             (data["crop_id"], data["category"], data["amount"])
         )
         await callback.message.edit_text("✅ Витрати успішно додано!")
+    except KeyError as ke:
+        await callback.message.edit_text(f"❌ Некоректні ключі в даних: {ke}")
     except Exception as e:
         await callback.message.edit_text(f"❌ Помилка при збереженні: {e}")
     finally:
         await state.clear()
+
 
 async def cancel_expense(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("❌ Додавання витрат скасовано.")
