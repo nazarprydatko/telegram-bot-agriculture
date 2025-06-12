@@ -1,7 +1,9 @@
+import uuid
 from aiogram.types import Message
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from utils.weather_api import get_weather
+from utils.logger_config import logger
 
 class WeatherStates(StatesGroup):
     waiting_for_city = State()
@@ -17,6 +19,7 @@ async def process_city_weather(message: Message, state: FSMContext):
 
         if weather_data.get("cod") != 200:
             await message.reply(f"❌ Помилка: {weather_data.get('message', 'Невідомо.')}")
+
         else:
             temp = weather_data['main']['temp']
             weather = weather_data['weather'][0]['description']
@@ -29,7 +32,19 @@ async def process_city_weather(message: Message, state: FSMContext):
                 f"🌧 Опис: {weather.capitalize()}"
             )
             await message.reply(response)
+
     except Exception as e:
-        await message.reply(f"❌ Сталася помилка: {e}")
+        error_id = str(uuid.uuid4())
+        user_id = message.from_user.id
+
+        logger.error(
+            f"[ERROR_ID={error_id}] Помилка у process_city_weather для користувача {user_id}: {e}",
+            exc_info=True
+        )
+
+        await message.reply(
+            f"⚠️ Сталася технічна помилка.\nКод: `{error_id}`\nСпробуйте пізніше або зверніться до адміністратора."
+        )
+
     finally:
         await state.clear()

@@ -19,6 +19,9 @@ from handlers.delete import confirm_delete, cancel_delete
 from handlers.reports import cmd_generate_report, cmd_export_to_excel
 from handlers.profit import cmd_calculate_profit
 from handlers.edit_crop import callback_edit_crop, process_edit_crop_id, process_edit_crop_data
+from utils.logger_config import logger
+
+logger.info(" Бот успішно запущений")
 
 # Клавіатура "Головне меню"
 main_menu_keyboard = ReplyKeyboardMarkup(

@@ -3,6 +3,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from database import fetch_all, execute_query
 from datetime import datetime
+import uuid
+from utils.logger_config import logger
 
 class CropStates(StatesGroup):
     """
@@ -30,16 +32,6 @@ async def cmd_add_crop(message: Message, state: FSMContext):
 
 
 async def process_crop_data(message: Message, state: FSMContext):
-    """
-    Process and validate crop data entered by the user, then ask for confirmation.
-
-    Args:
-        message (Message): User message containing crop data.
-        state (FSMContext): FSM context to store the data and update state.
-
-    Returns:
-        None
-    """
     if message.text.strip() == "🏠 Головне меню":
         await state.clear()
         from handlers.start import cmd_start
@@ -49,8 +41,16 @@ async def process_crop_data(message: Message, state: FSMContext):
     try:
         data = message.text.split(",")
         if len(data) != 4:
-            await message.reply("❌ Некоректний формат. Введіть 4 значення через кому:\n"
-                                "Назва, Площа (га), Дата (YYYY-MM-DD), Прогноз (днів).")
+            error_id = str(uuid.uuid4())
+            user_id = message.from_user.id
+            logger.warning(
+                f"[ERROR_ID={error_id}] Неправильна кількість параметрів у process_crop_data від користувача {user_id}: {data}",
+                exc_info=True
+            )
+            await message.reply(
+                f"❌ Некоректний формат. Введіть 4 значення через кому:\n"
+                f"Назва, Площа (га), Дата (YYYY-MM-DD), Прогноз (днів).\nКод помилки: `{error_id}`"
+            )
             return
 
         name, area_str, sowing_date_str, maturation_days_str = map(str.strip, data)
@@ -60,16 +60,40 @@ async def process_crop_data(message: Message, state: FSMContext):
             if area <= 0:
                 raise ValueError
         except ValueError:
-            await message.reply("❌ Площа має бути додатнім числом (наприклад: 12.5).")
+            error_id = str(uuid.uuid4())
+            user_id = message.from_user.id
+            logger.warning(
+                f"[ERROR_ID={error_id}] Некоректна площа в process_crop_data від користувача {user_id}: {area_str}",
+                exc_info=True
+            )
+            await message.reply(
+                f"❌ Площа має бути додатнім числом (наприклад: 12.5).\nКод помилки: `{error_id}`"
+            )
             return
 
         try:
             sowing_date = datetime.strptime(sowing_date_str, "%Y-%m-%d")
             if sowing_date.date() > datetime.now().date():
-                await message.reply("❌ Дата посіву не може бути в майбутньому.")
+                error_id = str(uuid.uuid4())
+                user_id = message.from_user.id
+                logger.warning(
+                    f"[ERROR_ID={error_id}] Дата посіву в майбутньому від користувача {user_id}: {sowing_date_str}",
+                    exc_info=True
+                )
+                await message.reply(
+                    f"❌ Дата посіву не може бути в майбутньому.\nКод помилки: `{error_id}`"
+                )
                 return
         except ValueError:
-            await message.reply("❌ Невірний формат дати. Використовуйте YYYY-MM-DD.")
+            error_id = str(uuid.uuid4())
+            user_id = message.from_user.id
+            logger.warning(
+                f"[ERROR_ID={error_id}] Невалідна дата у process_crop_data від користувача {user_id}: {sowing_date_str}",
+                exc_info=True
+            )
+            await message.reply(
+                f"❌ Невірний формат дати. Використовуйте YYYY-MM-DD.\nКод помилки: `{error_id}`"
+            )
             return
 
         try:
@@ -77,7 +101,15 @@ async def process_crop_data(message: Message, state: FSMContext):
             if maturation_days <= 0:
                 raise ValueError
         except ValueError:
-            await message.reply("❌ Прогноз дозрівання має бути цілим додатнім числом (наприклад: 90).")
+            error_id = str(uuid.uuid4())
+            user_id = message.from_user.id
+            logger.warning(
+                f"[ERROR_ID={error_id}] Невалідне число днів дозрівання в process_crop_data від користувача {user_id}: {maturation_days_str}",
+                exc_info=True
+            )
+            await message.reply(
+                f"❌ Прогноз дозрівання має бути цілим додатнім числом (наприклад: 90).\nКод помилки: `{error_id}`"
+            )
             return
 
         await state.update_data(
@@ -103,9 +135,26 @@ async def process_crop_data(message: Message, state: FSMContext):
         await state.set_state(CropStates.waiting_for_crop_confirmation)
 
     except (ValueError, TypeError, KeyError) as e:
-        await message.reply(f"❌ Некоректні дані: {e}")
+        error_id = str(uuid.uuid4())
+        user_id = message.from_user.id
+        logger.warning(
+            f"[ERROR_ID={error_id}] Помилка валідації в process_crop_data від користувача {user_id}: {e}",
+            exc_info=True
+        )
+        await message.reply(
+            f"❌ Введені дані некоректні. Код помилки: `{error_id}`"
+        )
+
     except Exception as e:
-        await message.reply(f"❌ Неочікувана помилка: {e}")
+        error_id = str(uuid.uuid4())
+        user_id = message.from_user.id
+        logger.error(
+            f"[ERROR_ID={error_id}] Невідома помилка в process_crop_data від користувача {user_id}: {e}",
+            exc_info=True
+        )
+        await message.reply(
+            f"⚠️ Сталася технічна помилка.\nКод: `{error_id}`\nСпробуйте пізніше або зверніться до адміністратора."
+        )
 
 
 async def confirm_crop(callback: CallbackQuery, state: FSMContext):
@@ -132,10 +181,27 @@ async def confirm_crop(callback: CallbackQuery, state: FSMContext):
             data["maturation_days"]
         ))
         await callback.message.edit_text("✅ Посів успішно додано!")
+
     except KeyError as ke:
-        await callback.message.edit_text(f"❌ Некоректні ключі в даних: {ke}")
+        error_id = str(uuid.uuid4())
+        logger.warning(
+            f"[ERROR_ID={error_id}] Відсутній ключ у confirm_crop: {ke}",
+            exc_info=True
+        )
+        await callback.message.edit_text(
+            f"❌ Помилка структури даних. Код: `{error_id}`"
+        )
+
     except Exception as e:
-        await callback.message.edit_text(f"❌ Помилка при збереженні: {e}")
+        error_id = str(uuid.uuid4())
+        logger.error(
+            f"[ERROR_ID={error_id}] Помилка запису до БД у confirm_crop: {e}",
+            exc_info=True
+        )
+        await callback.message.edit_text(
+            f"⚠️ Сталася технічна помилка при збереженні.\nКод: `{error_id}`"
+        )
+
     finally:
         await state.clear()
 
@@ -179,4 +245,12 @@ async def callback_view_crops(callback: CallbackQuery):
 
         await callback.message.answer(response)
     except Exception as e:
-        await callback.message.answer(f"❌ Сталася помилка: {e}")
+        error_id = str(uuid.uuid4())
+        logger.error(
+            f"[ERROR_ID={error_id}] Помилка у callback_view_crops: {e}",
+            exc_info=True
+        )
+        await callback.message.answer(
+            f"⚠️ Помилка при отриманні списку посівів.\nКод: `{error_id}`"
+        )
+
