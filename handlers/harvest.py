@@ -42,9 +42,12 @@ async def process_harvest_data(message: Message, state: FSMContext):
         await state.set_state(HarvestStates.waiting_for_harvest_confirmation)
 
     except ValueError as ve:
-        await message.reply(f"❌ Помилка у форматі введення: {ve}")
+        await message.reply(f"❌ Некоректні дані: {ve}")
+    except (TypeError, KeyError) as e:
+        await message.reply(f"❌ Помилка у типі або доступі до даних: {e}")
     except Exception as e:
-        await message.reply(f"❌ Сталася помилка: {e}")
+        await message.reply(f"❌ Неочікувана помилка: {e}")
+
 
 async def confirm_harvest(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -54,10 +57,13 @@ async def confirm_harvest(callback: CallbackQuery, state: FSMContext):
             (data["crop_id"], data["harvest_date"], data["workers_count"], data["total_mass"])
         )
         await callback.message.edit_text("✅ Врожай успішно додано!")
+    except KeyError as ke:
+        await callback.message.edit_text(f"❌ Відсутній ключ у даних: {ke}")
     except Exception as e:
         await callback.message.edit_text(f"❌ Помилка при збереженні: {e}")
     finally:
         await state.clear()
+
 
 async def cancel_harvest(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("❌ Додавання врожаю скасовано.")
